@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcrypt'); // Importing bcrypt for password hashing
 app.use(express.json());
 
 const PORT = 3000;
