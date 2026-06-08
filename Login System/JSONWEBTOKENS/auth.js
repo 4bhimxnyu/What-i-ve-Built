@@ -1,14 +1,16 @@
+require("dotenv").config();
 const express = require('express');
 const app = express();
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const PORT = 3000;
+const PORT = process.env.PORT;
+
 
 app.use(express.json());
 
 
-const SECRET_KEY = "1234567890abcdef";
+const SECRET_KEY = process.env.SECRET_KEY;
 let users = [];
 
 app.get("/", (req,res) =>{
