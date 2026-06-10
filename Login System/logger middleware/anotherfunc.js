@@ -7,24 +7,20 @@ const app = express();
 
 app.use(express.json());
 
-const SECRET_KEY = "mysecret";
+const SECRET_KEY = process.env.SECRET_KEY;
 
 // Temporary database
 let users = [];
 
 
-// =============================
 // Zod Schema
-// =============================
 const registerSchema = z.object({
     username: z.string().min(3),
     password: z.string().min(6)
 });
 
 
-// =============================
 // Register
-// =============================
 app.post("/register", async (req, res, next) => {
 
     try {
@@ -80,13 +76,11 @@ app.post("/register", async (req, res, next) => {
         next(err);
 
     }
-
+ 
 });
 
-
-// =============================
 // Login
-// =============================
+
 app.post("/login", async (req, res, next) => {
 
     try {
@@ -150,9 +144,8 @@ app.post("/login", async (req, res, next) => {
 });
 
 
-// =============================
 // Auth Middleware
-// =============================
+
 function auth(req, res, next) {
 
     try {
@@ -194,9 +187,8 @@ function auth(req, res, next) {
 }
 
 
-// =============================
 // Protected Route
-// =============================
+
 app.get(
     "/profile",
     auth,
@@ -211,9 +203,9 @@ app.get(
 );
 
 
-// =============================
+
 // Global Error Middleware
-// =============================
+
 app.use((err, req, res, next) => {
 
     console.error(err.message);
