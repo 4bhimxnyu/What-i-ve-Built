@@ -16,7 +16,6 @@ mongoose.connect(process.env.MONGO_URI)
         console.log("MongoDB connected");
     })
     .catch((err) => {
-        console.log("MongoDB connection failed");
         console.log(err);
     });
 
@@ -34,11 +33,11 @@ app.get("/", (req, res) => {
 
 app.post("/signup", async (req, res) => {
     try {
-        const { username, password, name } = req.body;
+        const { name, username, password } = req.body;
 
-        if (!(username && password && name)) {
+        if (!(name && username && password)) {
             return res.status(400).json({
-                message: "Please provide name, username and password"
+                message: "Please provide all fields"
             });
         }
 
@@ -62,22 +61,68 @@ app.post("/signup", async (req, res) => {
 
         await user.save();
 
+        res.status(201).json({
+            message: "User registered successfully"
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error"
+        });
+    }
+});
+
+app.post("/signin", async (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        const user = await User.findOne({
+            email: username
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                message: "User not found"
+            });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) {
+            return res.status(400).json({
+                message: "Incorrect password"
+            });
+        }
+
         const token = jwt.sign(
             {
                 id: user._id,
-                email: user.email
+                username: user.email
             },
             SECRET_KEY
         );
 
-        res.status(201).json({
-            message: "User registered successfully",
+        res.json({
+            message: "Login successful",
             token: token
         });
 
     } catch (error) {
-        console.log(error);
+        res.status(500).json({
+            message: "Internal Server Error"
+        });
+    }
+});
 
+app.get("/users", async (req, res) => {
+    try {
+        const users = await User.find({}, '-password');
+
+        res.json({
+            users: users
+        });
+
+    } catch (error) {
         res.status(500).json({
             message: "Internal Server Error"
         });
