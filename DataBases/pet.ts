@@ -135,6 +135,17 @@ app.post(
     }
 );
 
+app.get("/pets", async (req : Request , res : Response, next : NextFunction)=>{
+    try{
+        const pets = await Pet.find();
+
+        res.json(pets);
+    }
+    catch(error){
+        next(error)
+    }
+});
+
 app.use(
     (
         err: any,
