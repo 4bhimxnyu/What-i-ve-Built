@@ -3,7 +3,7 @@ require('dotenv').config({ path: '../.env' });
 const express = require('express');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+//const bcrypt = require('bcrypt');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -51,12 +51,12 @@ app.post("/signup", async (req, res) => {
             });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        //const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = new User({
             name: name,
             email: username,
-            password: hashedPassword
+            password: password
         });
 
         await user.save();
@@ -86,13 +86,13 @@ app.post("/signin", async (req, res) => {
             });
         }
 
-        const isMatch = await bcrypt.compare(password, user.password);
+        //const isMatch = await bcrypt.compare(password, user.password);
 
-        if (!isMatch) {
-            return res.status(400).json({
-                message: "Incorrect password"
-            });
-        }
+        // if (!isMatch) {
+        //     return res.status(400).json({
+        //         message: "Incorrect password"
+        //     });
+        // }
 
         const token = jwt.sign(
             {
