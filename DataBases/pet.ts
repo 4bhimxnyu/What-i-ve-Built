@@ -17,12 +17,15 @@ mongoose.connect(process.env.MONGO_URI as string)
         console.log("Database could not connect");
     });
 
+
+// initializing all the fields
 interface IUser {
     name: string;
     id: string;
     age: number;
 }
 
+//decribing all the fields
 const userSchema = new mongoose.Schema<IUser>({
     name: {
         type: String,
@@ -38,6 +41,8 @@ const userSchema = new mongoose.Schema<IUser>({
         required: true
     }
 });
+
+//schema to create pets
 
 const Pet = mongoose.model<IUser>("pets", userSchema);
 
@@ -146,6 +151,9 @@ app.get("/pets", async (req : Request , res : Response, next : NextFunction)=>{
     }
 });
 
+
+//global middleware for errors
+
 app.use(
     (
         err: any,
@@ -155,7 +163,7 @@ app.use(
     ) => {
         res.status(500).json({
             success: false,
-            message: err.message || "pet riot has started"
+            message: err.message || "pet riot has started. wel'be back"
         });
     }
 );
