@@ -116,7 +116,7 @@ app.post("/signin", async (req, res) => {
 
 app.get("/users", async (req, res) => {
     try {
-        const users = await User.find({}, '-password');
+        const users = await User.find({}, '-password'); // -password is used to hide the password field.
 
         res.json({
             users: users
