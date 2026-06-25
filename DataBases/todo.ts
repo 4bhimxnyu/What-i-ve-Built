@@ -132,5 +132,74 @@ app.post("/signup", async(
                 message: "user already exist"
             });
         }
+        const hashedPassword = await bcrypt.hash(password,10);
+        const user = new User({
+            name,
+            email,
+            password : hashedPassword
+        });
+        await user.save();
+        
+        res.status(201).json({
+            message: "user created"
+        })
+    }
+    catch{
+        res.status(500).json({
+            message : "invalid credentials"
+        })
+    }
+    
+});
+
+
+app.post("/signin", async( req : Request , res : Response)=>{
+    try{
+        const {email, password} = req.body;
+        const user = await User.findOne({email});
+        if(!user){
+            return res.status(400).json({
+                message: "User not found"
+            });
+        }
+        const isMatch = await bcrypt.compare(password, user.password);
+        const token = jwt.sign(
+            {
+                id: user._id,
+                email: user.email
+            },
+            Secretkey
+        );
+    }
+    catch{
+        res.status(500).json({
+            message : "internal server error"
+        })
     }
 })
+
+app.post("/todos", async(
+    req : Request,
+    res : Response
+)=>{
+    try{
+        const title = req.body;
+        const todo = new Todo({
+            title,
+            userId : req.user.id
+        })
+        await todo.save();
+        
+        res.status(201).json({
+            message : "Todo list created"
+        })
+
+
+    }
+    catch{
+        res.status(500).json({
+            message: "Internal Server error"
+        })
+    }
+})
+
