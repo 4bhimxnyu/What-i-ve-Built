@@ -1,3 +1,8 @@
+// todo list app that takes multiple users and allow them to create their to do list. it uses crud operations using MongoDB,
+// users can put their tasks on https://localhost/api/todos
+// different task can be viewed using https://localhost/api/todos:id where id denotes the TodoId (taken from user id in post request try{} block)
+
+
 import dotenv from "dotenv";
 dotenv.config({ path: "../.env" });
 
@@ -9,7 +14,7 @@ import bcrypt from "bcrypt";
 const app = express();
 
 const PORT = process.env.PORT || 3000;
-const Secretkey = process.env.SECRET_KEY as string;
+const Secretkey = "ada12345"//process.env.SECRET_KEY as string;
 
 app.use(express.json());
 
@@ -103,13 +108,13 @@ const auth = (
     }
 };
 
-app.get("/", (req: Request, res: Response) => {
+app.get("/api", (req: Request, res: Response) => {
     res.json({
         message: "Welcome to the Home Page",
     });
 });
 
-app.post("/signup", async (req: Request, res: Response) => {
+app.post("/api/signup", async (req: Request, res: Response) => {
     try {
         const { name, email, password } = req.body;
 
@@ -149,7 +154,7 @@ app.post("/signup", async (req: Request, res: Response) => {
     }
 });
 
-app.post("/signin", async (req: Request, res: Response) => {
+app.post("/api/signin", async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
 
@@ -197,7 +202,7 @@ app.post("/signin", async (req: Request, res: Response) => {
 });
 
 app.post(
-    "/todos",
+    "/api/todos",
     auth,
     async (req: AuthRequest, res: Response) => {
         try {
@@ -230,7 +235,7 @@ app.post(
 );
 
 app.get(
-    "/todos",
+    "/api/todos",
     auth,
     async (req: AuthRequest, res: Response) => {
         try {
@@ -252,7 +257,7 @@ app.get(
 );
 
 app.put(
-    "/todos/:id",
+    "/api/todos/:id",
     auth,
     async (req: AuthRequest, res: Response) => {
         try {
@@ -292,7 +297,7 @@ app.put(
 );
 
 app.delete(
-    "/todos/:id",
+    "/api/todos/:id",
     auth,
     async (req: AuthRequest, res: Response) => {
         try {
