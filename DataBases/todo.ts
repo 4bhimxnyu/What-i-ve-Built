@@ -1,205 +1,327 @@
 import dotenv from "dotenv";
-dotenv.config(
-    {path: "../.env"}
-);
+dotenv.config({ path: "../.env" });
 
-import express, { Request, Response, NextFunction} from "express";
+import express, { Request, Response, NextFunction } from "express";
 import mongoose from "mongoose";
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
+import jwt, { JwtPayload } from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
 const app = express();
-const PORT = process.env.PORT;
+
+const PORT = process.env.PORT || 3000;
 const Secretkey = process.env.SECRET_KEY as string;
 
-app.use(express.json()); //creating middleware
+app.use(express.json());
 
+mongoose
+    .connect(process.env.MONGO_URI as string)
+    .then(() => {
+        console.log("Database Connected");
+    })
+    .catch((err) => {
+        console.log(err);
+    });
 
-// connecting mongodb
-mongoose.connect(process.env.MONGO_URI as string).then( ()=>{
-    console.log("database is connected");
-}).catch((err)=>{
-    console.log(err);
-})
-
-// creates an interface or map of how info will be stored
-interface IUser{
-    name : string,
-    email: string,
-    password : string
+interface IUser {
+    name: string;
+    email: string;
+    password: string;
 }
 
-interface ITodo{
-    task: string,
-    progress : boolean,
-    userId : string
+interface ITodo {
+    task: string;
+    progress: boolean;
+    userId: string;
 }
 
-
-// describing scheme/ type of data and requirements
 const userSchema = new mongoose.Schema<IUser>({
     name: {
-        type : String,
-        required : true
+        type: String,
+        required: true,
     },
-    email :{
-        type : String,
-        required : true,
-        unique : true
+
+    email: {
+        type: String,
+        required: true,
+        unique: true,
     },
+
     password: {
-        tpye : String,
-        required : true
-    }
+        type: String,
+        required: true,
+    },
 });
 
 const todoSchema = new mongoose.Schema<ITodo>({
-    task:{
-        type : String,
-        required : true
-    },
-    progress:{
-        type: Boolean,
-        default: false
-    },
-    userId:{
+    task: {
         type: String,
-        required : true
-    }
-})
+        required: true,
+    },
 
+    progress: {
+        type: Boolean,
+        default: false,
+    },
 
-const User = mongoose.model<IUser>(
-    "Users",
-    userSchema
-)
+    userId: {
+        type: String,
+        required: true,
+    },
+});
 
-const Todo = mongoose.model<ITodo>(
-    "Todos",
-    todoSchema
-)
+const User = mongoose.model<IUser>("Users", userSchema);
 
-interface AuthRequest extends Request{
-    users?: any;
+const Todo = mongoose.model<ITodo>("Todos", todoSchema);
+
+interface AuthRequest extends Request {
+    user?: JwtPayload;
 }
 
 const auth = (
-    req : AuthRequest,
-    res : Response,
+    req: AuthRequest,
+    res: Response,
     next: NextFunction
 ) => {
     const token = req.headers.authorization;
 
     if (!token) {
         return res.status(401).json({
-            message: "Token missing"
+            message: "Token Missing",
         });
     }
 
     try {
-
-        const decoded = jwt.verify(
-            token,
-            Secretkey
-        );
+        const decoded = jwt.verify(token, Secretkey) as JwtPayload;
 
         req.user = decoded;
 
         next();
-    }
-    catch{
+    } catch (err) {
         return res.status(401).json({
-            message: "Invalid token"
-        })
+            message: "Invalid Token",
+        });
     }
-}
+};
 
 app.get("/", (req: Request, res: Response) => {
     res.json({
-        message : "welcome to the home page."
-    })
-})
+        message: "Welcome to the Home Page",
+    });
+});
 
-app.post("/signup", async(
-    req : Request,
-    res : Response
-)=>{
-    try{
-        const{ name , email, password }= req.body;
-        const  existingUser = await User.findOne({email});
-        if(existingUser){
+app.post("/signup", async (req: Request, res: Response) => {
+    try {
+        const { name, email, password } = req.body;
+
+        if (!(name && email && password)) {
             return res.status(400).json({
-                message: "user already exist"
+                message: "Please provide all fields",
             });
         }
-        const hashedPassword = await bcrypt.hash(password,10);
+
+        const existingUser = await User.findOne({ email });
+
+        if (existingUser) {
+            return res.status(400).json({
+                message: "User already exists",
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         const user = new User({
             name,
             email,
-            password : hashedPassword
+            password: hashedPassword,
         });
+
         await user.save();
-        
+
         res.status(201).json({
-            message: "user created"
-        })
-    }
-    catch{
+            message: "User Created Successfully",
+        });
+    } catch (err) {
+        console.log(err);
+
         res.status(500).json({
-            message : "invalid credentials"
-        })
+            message: "Internal Server Error",
+        });
     }
-    
 });
 
+app.post("/signin", async (req: Request, res: Response) => {
+    try {
+        const { email, password } = req.body;
 
-app.post("/signin", async( req : Request , res : Response)=>{
-    try{
-        const {email, password} = req.body;
-        const user = await User.findOne({email});
-        if(!user){
+        if (!(email && password)) {
             return res.status(400).json({
-                message: "User not found"
+                message: "Please provide email and password",
             });
         }
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(400).json({
+                message: "User not found",
+            });
+        }
+
         const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) {
+            return res.status(400).json({
+                message: "Incorrect Password",
+            });
+        }
+
         const token = jwt.sign(
             {
                 id: user._id,
-                email: user.email
+                email: user.email,
             },
             Secretkey
         );
-    }
-    catch{
+
+        res.json({
+            message: "Login Successful",
+            token,
+        });
+    } catch (err) {
+        console.log(err);
+
         res.status(500).json({
-            message : "internal server error"
-        })
+            message: "Internal Server Error",
+        });
     }
-})
+});
 
-app.post("/todos", async(
-    req : Request,
-    res : Response
-)=>{
-    try{
-        const title = req.body;
-        const todo = new Todo({
-            title,
-            userId : req.user.id
-        })
-        await todo.save();
-        
-        res.status(201).json({
-            message : "Todo list created"
-        })
+app.post(
+    "/todos",
+    auth,
+    async (req: AuthRequest, res: Response) => {
+        try {
+            const { task } = req.body;
 
+            if (!task) {
+                return res.status(400).json({
+                    message: "Task is required",
+                });
+            }
 
+            const todo = new Todo({
+                task,
+                userId: req.user?.id,
+            });
+
+            await todo.save();
+
+            res.status(201).json({
+                message: "Todo Created Successfully",
+            });
+        } catch (err) {
+            console.log(err);
+
+            res.status(500).json({
+                message: "Internal Server Error",
+            });
+        }
     }
-    catch{
-        res.status(500).json({
-            message: "Internal Server error"
-        })
-    }
-})
+);
 
+app.get(
+    "/todos",
+    auth,
+    async (req: AuthRequest, res: Response) => {
+        try {
+            const todos = await Todo.find({
+                userId: req.user?.id,
+            });
+
+            res.json({
+                todos,
+            });
+        } catch (err) {
+            console.log(err);
+
+            res.status(500).json({
+                message: "Internal Server Error",
+            });
+        }
+    }
+);
+
+app.put(
+    "/todos/:id",
+    auth,
+    async (req: AuthRequest, res: Response) => {
+        try {
+            const todoId = req.params.id;
+
+            const todo = await Todo.findOneAndUpdate(
+                {
+                    _id: todoId,
+                    userId: req.user?.id,
+                },
+                {
+                    progress: true,
+                },
+                {
+                    new: true,
+                }
+            );
+
+            if (!todo) {
+                return res.status(404).json({
+                    message: "Todo not found",
+                });
+            }
+
+            res.json({
+                message: "Task Completed",
+                todo,
+            });
+        } catch (err) {
+            console.log(err);
+
+            res.status(500).json({
+                message: "Internal Server Error",
+            });
+        }
+    }
+);
+
+app.delete(
+    "/todos/:id",
+    auth,
+    async (req: AuthRequest, res: Response) => {
+        try {
+            const todoId = req.params.id;
+
+            const todo = await Todo.findOneAndDelete({
+                _id: todoId,
+                userId: req.user?.id,
+            });
+
+            if (!todo) {
+                return res.status(404).json({
+                    message: "Todo not found",
+                });
+            }
+
+            res.json({
+                message: "Todo Deleted Successfully",
+            });
+        } catch (err) {
+            console.log(err);
+
+            res.status(500).json({
+                message: "Internal Server Error",
+            });
+        }
+    }
+);
+
+app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+});
