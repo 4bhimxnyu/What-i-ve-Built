@@ -1,6 +1,8 @@
 // todo list app that takes multiple users and allow them to create their to do list. it uses crud operations using MongoDB,
-// users can put their tasks on https://localhost/api/todos
-// different task can be viewed using https://localhost/api/todos:id where id denotes the TodoId (taken from user id in post request try{} block)
+// users can put their tasks on https://localhost:3000/api/todos
+// different task can be viewed using https://localhost:3000/api/todos:id where id denotes the TodoId (taken from user id in post request try{} block)
+// users can sign themselves up https://localhost:3000/api/signup
+// users can sign in through https://localhost:3000/api/signin
 
 
 import dotenv from "dotenv";
