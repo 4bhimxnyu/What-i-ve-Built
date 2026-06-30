@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>class understanding</title>
+</head>
+<body>
+    <h2> This is a new Program to understand document.getElementsByClassName</h2>
+    <p>finding html through classname</p><br>
+    <p class="intro">demonstration of the method <b>document.getElementbyClassName</b> method</p>
+    <p id="demo"></p>
+
+    <script>
+        const x = document.getElementsByClassName("intro");
+        document.getElementById("demo").innerHTML = "the first paragraph i.e index[0] with class name = intro is " +x[0].innerHTML ;
+    </script>
+</body>
+</html>
